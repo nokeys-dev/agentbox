@@ -1,0 +1,27 @@
+{
+  "runtime": {
+    "human": "developer@example.com",
+    "agent": "coding-agent",
+    "runtimeId": "local-development",
+    "task": "bootstrap"
+  },
+  "repositories": [
+    {
+      "name": "YOUR-ORG/YOUR-REPO",
+      "id": 123456789,
+      "installationId": 12345678,
+      "allowWorkflowWrites": false,
+      "protectedBranches": ["main"]
+    }
+  ],
+  "rules": [
+    { "id": "read-repository", "action": "git.read", "repository": "YOUR-ORG/YOUR-REPO", "effect": "allow" },
+    { "id": "read-pull-requests", "action": "github.pr.read", "repository": "YOUR-ORG/YOUR-REPO", "effect": "allow" },
+    { "id": "create-pull-request", "action": "github.pr.create", "repository": "YOUR-ORG/YOUR-REPO", "ref": "refs/heads/agent/*", "effect": "approval" },
+    { "id": "read-ci", "action": "github.actions.read", "repository": "YOUR-ORG/YOUR-REPO", "effect": "allow" },
+    { "id": "feature-branches", "action": "git.push", "repository": "YOUR-ORG/YOUR-REPO", "ref": "refs/heads/agent/*", "effect": "allow" },
+    { "id": "review-main", "action": "git.push", "repository": "YOUR-ORG/YOUR-REPO", "ref": "refs/heads/main", "effect": "approval", "approvals": 2, "reviewerSources": ["oidc"] },
+    { "id": "protect-tags", "action": "git.push", "repository": "*", "ref": "refs/tags/*", "effect": "deny" },
+    { "id": "protect-deletions", "action": "git.push", "repository": "*", "ref": "*", "operation": "delete", "effect": "deny" }
+  ]
+}

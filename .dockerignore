@@ -1,0 +1,11 @@
+.git
+.agents
+.codex
+.env
+.env.*
+.agentgate
+config.local.json
+*.pem
+*.key
+node_modules
+coverage

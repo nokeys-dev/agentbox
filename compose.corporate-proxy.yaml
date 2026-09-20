@@ -1,0 +1,35 @@
+# Override: send the stack's outbound traffic through the company's forward proxy, for networks
+# where nothing reaches the internet directly.
+#
+#   - agentd and model-gateway make their provider and model calls through it (Node reads
+#     HTTPS_PROXY when NODE_USE_ENV_PROXY is set; names in NO_PROXY are dialled directly).
+#   - egress-proxy chains every tunnel it has already allowed through it. The allow list, deny
+#     list, GitHub block, IP-literal block, and quotas are all decided first; the company proxy
+#     only carries what passed. It resolves the names, so the private-address check applies only
+#     to names the local resolver can also see.
+#   - The workspace is untouched: its only route out is still egress-proxy.
+#
+# Usage:
+#   echo "AGENTGATE_CORPORATE_PROXY=http://proxy.example.com:8080" >> .env
+#   echo "AGENTGATE_CORPORATE_NO_PROXY=.corp.example.com,ghe.example.com" >> .env   # optional
+#   docker compose -f compose.yaml -f compose.corporate-proxy.yaml up -d
+#   # with the enterprise services, also: -f enterprise/compose.enterprise.yaml -f enterprise/compose.corporate-proxy.enterprise.yaml
+#
+# Credentials, if the proxy needs them, go in the URL (http://user:password@proxy...); keep .env
+# owner-only. If the proxy inspects TLS, also layer compose.corporate-ca.yaml.
+services:
+  agentd:
+    environment:
+      NODE_USE_ENV_PROXY: "1"
+      HTTPS_PROXY: ${AGENTGATE_CORPORATE_PROXY:?Set AGENTGATE_CORPORATE_PROXY in .env to your forward proxy, such as http://proxy.example.com:8080}
+      HTTP_PROXY: ${AGENTGATE_CORPORATE_PROXY:?Set AGENTGATE_CORPORATE_PROXY in .env to your forward proxy, such as http://proxy.example.com:8080}
+      NO_PROXY: agentd,model-gateway,egress-proxy,approval-web,issuer-web,hosted-agents,oauth2-proxy,localhost,127.0.0.1${AGENTGATE_CORPORATE_NO_PROXY:+,}${AGENTGATE_CORPORATE_NO_PROXY:-}
+  model-gateway:
+    environment:
+      NODE_USE_ENV_PROXY: "1"
+      HTTPS_PROXY: ${AGENTGATE_CORPORATE_PROXY:?Set AGENTGATE_CORPORATE_PROXY in .env to your forward proxy, such as http://proxy.example.com:8080}
+      HTTP_PROXY: ${AGENTGATE_CORPORATE_PROXY:?Set AGENTGATE_CORPORATE_PROXY in .env to your forward proxy, such as http://proxy.example.com:8080}
+      NO_PROXY: agentd,model-gateway,egress-proxy,approval-web,issuer-web,hosted-agents,oauth2-proxy,localhost,127.0.0.1${AGENTGATE_CORPORATE_NO_PROXY:+,}${AGENTGATE_CORPORATE_NO_PROXY:-}
+  egress-proxy:
+    environment:
+      AGENTGATE_EGRESS_UPSTREAM_PROXY: ${AGENTGATE_CORPORATE_PROXY:?Set AGENTGATE_CORPORATE_PROXY in .env to your forward proxy, such as http://proxy.example.com:8080}

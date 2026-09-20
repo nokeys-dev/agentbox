@@ -1,0 +1,77 @@
+{
+  "name": "@nokeys/agentbox",
+  "version": "0.2.0",
+  "description": "AgentBox by NoKeys: everything your agent needs, nothing it shouldn't have. A governed workspace for AI agents with identity, policy, approvals, and audit; credentials never enter the workspace.",
+  "license": "Apache-2.0",
+  "homepage": "https://nokeys.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rvasqz86/agentbox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rvasqz86/agentbox/issues"
+  },
+  "keywords": [
+    "ai-agents",
+    "identity",
+    "access-control",
+    "credential-broker",
+    "github",
+    "gitlab",
+    "security",
+    "claude-code",
+    "cursor"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=22.14.0"
+  },
+  "bin": {
+    "agentbox": "bin/agentbox.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "scripts",
+    "examples",
+    "compose.yaml",
+    "compose.kms.yaml",
+    "compose.broker-image.yaml",
+    "compose.corporate-proxy.yaml",
+    "compose.corporate-ca.yaml",
+    "compose.workspace-image.yaml",
+    "Dockerfile",
+    ".devcontainer",
+    ".dockerignore",
+    ".env.example",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "THREAT_MODEL.md",
+    "ROADMAP.md",
+    "SECURITY.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/daemon.js",
+    "daemon": "npm start",
+    "approvals": "node --env-file-if-exists=.env src/cli.js list",
+    "approve": "node --env-file-if-exists=.env src/cli.js approve",
+    "deny": "node --env-file-if-exists=.env src/cli.js deny",
+    "test": "node scripts/run-tests.js",
+    "test:fuzz": "FUZZ_ITERATIONS=20000 node --test test/fuzz.test.js",
+    "test:live": "node --env-file-if-exists=.env.live scripts/live-smoke.js",
+    "check": "node scripts/check.js",
+    "audit:verify": "node --env-file-if-exists=.env scripts/audit-verify.js",
+    "audit:forward": "node --env-file-if-exists=.env scripts/audit-forward.js",
+    "demo": "node scripts/demo.js",
+    "test:docker": "node scripts/docker-smoke.js",
+    "test:fleet": "node scripts/fleet-smoke.js",
+    "bootstrap": "sh scripts/bootstrap-dev.sh",
+    "pack:check": "npm pack --dry-run"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

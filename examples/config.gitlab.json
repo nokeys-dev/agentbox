@@ -1,0 +1,28 @@
+{
+  "provider": "gitlab",
+  "runtime": {
+    "human": "developer@example.com",
+    "agent": "coding-agent",
+    "runtimeId": "local-development",
+    "task": "bootstrap"
+  },
+  "repositories": [
+    {
+      "name": "YOUR-GROUP/YOUR-PROJECT",
+      "projectId": 123456,
+      "protectedBranches": ["main"]
+    }
+  ],
+  "rules": [
+    { "id": "read-project", "action": "git.read", "repository": "YOUR-GROUP/YOUR-PROJECT", "effect": "allow" },
+    { "id": "read-merge-requests", "action": "gitlab.mr.read", "repository": "YOUR-GROUP/YOUR-PROJECT", "effect": "allow" },
+    { "id": "create-merge-request", "action": "gitlab.mr.create", "repository": "YOUR-GROUP/YOUR-PROJECT", "ref": "refs/heads/agent/*", "effect": "approval" },
+    { "id": "comment", "action": "gitlab.mr.comment", "repository": "YOUR-GROUP/YOUR-PROJECT", "effect": "allow" },
+    { "id": "read-pipelines", "action": "gitlab.pipelines.read", "repository": "YOUR-GROUP/YOUR-PROJECT", "effect": "allow" },
+    { "id": "feature-branches", "action": "git.push", "repository": "YOUR-GROUP/YOUR-PROJECT", "ref": "refs/heads/agent/*", "effect": "allow" },
+    { "id": "review-main", "action": "git.push", "repository": "YOUR-GROUP/YOUR-PROJECT", "ref": "refs/heads/main", "effect": "approval", "approvals": 2, "reviewerSources": ["oidc"] },
+    { "id": "merge-main", "action": "gitlab.mr.merge", "repository": "YOUR-GROUP/YOUR-PROJECT", "ref": "refs/heads/main", "effect": "approval", "mergeMethods": ["squash"] },
+    { "id": "protect-tags", "action": "git.push", "repository": "*", "ref": "refs/tags/*", "effect": "deny" },
+    { "id": "protect-deletions", "action": "git.push", "repository": "*", "ref": "*", "operation": "delete", "effect": "deny" }
+  ]
+}

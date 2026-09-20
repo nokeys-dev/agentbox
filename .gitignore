@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.agentgate/
+config.local.json
+*.pem
+*.key
+coverage/
+.DS_Store
+*.log
+.superpowers/
+.tls-test-*/
+dist/
+*.tgz
+.claude/

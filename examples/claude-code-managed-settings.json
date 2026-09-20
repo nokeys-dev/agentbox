@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(/run/secrets/**)",
+      "Read(/run/secrets)",
+      "Read(~/.config/agentgate/**)",
+      "Read(/etc/profile.d/agentgate.sh)",
+      "Bash(cat /run/secrets*)",
+      "Bash(cat ~/.config/agentgate*)",
+      "Bash(env*)",
+      "Bash(printenv*)",
+      "Bash(git config --get-all http.*extraheader*)",
+      "Bash(git config --global --includes *)"
+    ]
+  }
+}

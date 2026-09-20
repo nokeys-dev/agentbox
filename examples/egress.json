@@ -1,0 +1,10 @@
+{
+  "allow": [
+    "registry.npmjs.org:443",
+    "pypi.org:443",
+    "files.pythonhosted.org:443",
+    "deb.debian.org:443",
+    "nodejs.org:443"
+  ],
+  "maxBytesPerHost": 2147483648
+}

@@ -1,0 +1,24 @@
+# Override: run a prebuilt broker image (the signed ghcr.io digest from a release, or your
+# registry's mirror of it) for every core service instead of building the Dockerfile from this
+# checkout. For machines that cannot reach npm and the OS package mirrors during a build, and for
+# companies that only run images they have verified and mirrored.
+#
+# Usage:
+#   cosign verify ghcr.io/OWNER/agentbox@sha256:...   # see docs/deployment.md
+#   echo "AGENTGATE_IMAGE=registry.example.com/agentbox@sha256:..." >> .env
+#   docker compose -f compose.yaml -f compose.broker-image.yaml up -d
+#   # with the enterprise services, also: -f enterprise/compose.enterprise.yaml -f enterprise/compose.broker-image.enterprise.yaml
+#
+# `build` is cleared (`!reset`) rather than left in place so that `up --build` cannot rebuild the
+# Dockerfile under the verified image's name and silently replace it. Everything else about each
+# service is inherited, so selecting an image here cannot widen a service's privileges.
+services:
+  agentd:
+    build: !reset null
+    image: ${AGENTGATE_IMAGE:?Set AGENTGATE_IMAGE in .env to the broker image to run}
+  egress-proxy:
+    build: !reset null
+    image: ${AGENTGATE_IMAGE:?Set AGENTGATE_IMAGE in .env to the broker image to run}
+  model-gateway:
+    build: !reset null
+    image: ${AGENTGATE_IMAGE:?Set AGENTGATE_IMAGE in .env to the broker image to run}

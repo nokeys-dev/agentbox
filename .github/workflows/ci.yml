@@ -1,0 +1,70 @@
+name: CI
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '41 3 * * *'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        node: ['22.14', '22', '24']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm test
+        env:
+          FUZZ_ITERATIONS: '2000'
+      - run: npm run demo
+  fuzz:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: |
+          seed=$(date +%s)
+          echo "FUZZ_SEED=$seed"
+          FUZZ_SEED="$seed" npm run test:fuzz
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: docker build -t agentgate:ci .
+      - run: docker build --tag agentgate-workspace:local --file examples/workspace.Dockerfile .
+      # Each workspace profile must build on the base and prove its tool runs as node (the
+      # Dockerfile's own final RUN does that), so a broken postinstall or version pin fails CI.
+      - run: docker build --tag agentgate-workspace-claude:local --file examples/workspace-claude-code.Dockerfile .
+      - run: npm run test:docker
+        env:
+          AGENTGATE_IMAGE: agentgate:ci
+      - run: npm run test:fleet
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: agentgate:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
+        with:
+          image-ref: agentgate-workspace:local
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          trivyignores: examples/workspace.trivyignore

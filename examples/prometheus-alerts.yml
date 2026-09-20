@@ -1,0 +1,29 @@
+groups:
+  - name: agentgate
+    rules:
+      - alert: AgentBoxAuditForwardLag
+        expr: agentgate_audit_forward_lag_records > 1000
+        for: 10m
+        labels: { severity: page }
+        annotations: { summary: 'Audit records are not reaching the off-host sink; local rotation may evict them' }
+      - alert: AgentBoxUpstreamFailures
+        expr: increase(agentgate_upstream_failures_total[15m]) > 10
+        labels: { severity: warn }
+        annotations: { summary: 'GitHub is rejecting brokered requests (token, permission, or outage)' }
+      - alert: AgentBoxApprovalsBacklog
+        expr: agentgate_approvals_pending > 10
+        for: 15m
+        labels: { severity: warn }
+        annotations: { summary: 'Approvals are piling up; reviewers may not be notified' }
+      - alert: AgentBoxDiskLow
+        expr: increase(agentgate_errors_total{code="DISK_LOW"}[5m]) > 0
+        labels: { severity: page }
+        annotations: { summary: 'Broker is failing closed because its state volume is nearly full' }
+      - alert: AgentBoxUnauthenticatedBurst
+        expr: increase(agentgate_requests_total{status="401"}[5m]) > 50
+        labels: { severity: warn }
+        annotations: { summary: 'Many unauthenticated requests; something on the network is probing the broker' }
+      - alert: AgentBoxDown
+        expr: up{job="agentgate"} == 0
+        for: 2m
+        labels: { severity: page }

@@ -1,0 +1,21 @@
+{
+  "name": "AgentBox workspace",
+  "dockerComposeFile": ["../compose.yaml"],
+  "service": "workspace",
+  "runServices": ["workspace"],
+  "workspaceFolder": "/workspace",
+  "remoteUser": "node",
+  "overrideCommand": false,
+  "shutdownAction": "none",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "git.terminalAuthentication": false,
+        "git.useIntegratedAskPass": false,
+        "github.gitAuthentication": false,
+        "git.autofetch": false,
+        "remote.autoForwardPorts": false
+      }
+    }
+  }
+}

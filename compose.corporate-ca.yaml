@@ -1,0 +1,31 @@
+# Override: trust the company's root CA in the broker services, for forward proxies that inspect
+# TLS and re-sign it. The file is added to Node's trust store (NODE_EXTRA_CA_CERTS); the public
+# roots stay trusted. Without it, agentd and model-gateway fail every outbound call with a
+# certificate error behind such a proxy.
+#
+# Usage:
+#   echo "AGENTGATE_CORPORATE_CA_PATH=/etc/ssl/certs/corp-root.pem" >> .env   # PEM, may hold several
+#   docker compose -f compose.yaml -f compose.corporate-proxy.yaml -f compose.corporate-ca.yaml up -d
+#
+# The workspace gets the same file: its entrypoint builds a bundle of the image's public roots plus
+# this CA and points Git, curl, Node, npm, pip, and OpenSSL-based tools at it, so nothing has to be
+# baked into the workspace image. The broker connection keeps its own CA.
+services:
+  agentd:
+    environment:
+      NODE_EXTRA_CA_CERTS: /run/secrets/corporate_ca
+    secrets:
+      - corporate_ca
+  model-gateway:
+    environment:
+      NODE_EXTRA_CA_CERTS: /run/secrets/corporate_ca
+    secrets:
+      - corporate_ca
+  workspace:
+    environment:
+      AGENTGATE_CORPORATE_CA_FILE: /run/secrets/corporate_ca
+    secrets:
+      - corporate_ca
+secrets:
+  corporate_ca:
+    file: ${AGENTGATE_CORPORATE_CA_PATH:?Set AGENTGATE_CORPORATE_CA_PATH in .env to your company root CA (PEM)}

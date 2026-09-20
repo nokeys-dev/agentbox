@@ -1,0 +1,17 @@
+{
+  "allow": [
+    "registry.npmjs.org:443",
+    "pypi.org:443",
+    "files.pythonhosted.org:443",
+    "deb.debian.org:443",
+    "nodejs.org:443",
+    "update.code.visualstudio.com:443",
+    "vscode.download.prss.microsoft.com:443",
+    "marketplace.visualstudio.com:443",
+    "*.vsassets.io:443",
+    "cursor.blob.core.windows.net:443",
+    "open-vsx.org:443",
+    "openvsxorg.blob.core.windows.net:443"
+  ],
+  "maxBytesPerHost": 2147483648
+}

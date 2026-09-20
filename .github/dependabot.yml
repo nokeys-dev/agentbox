@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directory: /
+    schedule: { interval: weekly }
+    # The images run a Node LTS line (even majors). Digest and minor updates within it are wanted;
+    # a jump to another major is a deliberate change, made by hand with the test matrix and the
+    # pinned npm in examples/workspace.Dockerfile checked against it. Odd majors are never LTS.
+    ignore:
+      - dependency-name: node
+        update-types: ['version-update:semver-major']
+  - package-ecosystem: docker
+    directory: /examples
+    schedule: { interval: weekly }
+    # The images run a Node LTS line (even majors). Digest and minor updates within it are wanted;
+    # a jump to another major is a deliberate change, made by hand with the test matrix and the
+    # pinned npm in examples/workspace.Dockerfile checked against it. Odd majors are never LTS.
+    ignore:
+      - dependency-name: node
+        update-types: ['version-update:semver-major']
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }

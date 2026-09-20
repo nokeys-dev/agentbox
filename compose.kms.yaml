@@ -1,0 +1,55 @@
+# Override: sign GitHub App JWTs with AWS KMS instead of a local private-key file, using the
+# broker's built-in KMS signer (SigV4 over HTTPS; no AWS CLI or SDK in the image).
+#
+# Usage (KMS before any other override, so the enterprise overlay's agentd additions merge on top):
+#   docker compose -f compose.yaml -f compose.kms.yaml up -d --build agentd
+#   docker compose -f compose.yaml -f compose.kms.yaml -f enterprise/compose.enterprise.yaml up -d --build
+#
+# compose.yaml's top-level `secrets.github_app_key` still interpolates GITHUB_PRIVATE_KEY_PATH
+# with a required (":?") default — Compose evaluates each file's variables independently of any
+# override, before merging, so that requirement cannot be lifted from this override file. Keep
+# GITHUB_PRIVATE_KEY_PATH set to any placeholder that exists on the host (e.g. /dev/null) when
+# using this override; the secret built from it is never mounted into agentd (its `secrets:` list
+# is fully replaced below) and its contents are never read. agentd refuses to start if both
+# AGENTGATE_KMS_KEY_ID and GITHUB_PRIVATE_KEY_PATH reach it.
+#
+# `environment:` below is a full replacement (`!override`), not a per-key patch — Compose only
+# supports replacing (`!override`) or clearing (`!reset`) a whole mapping, and setting a single key
+# to `null` falls back to the host shell's value (confirmed against Docker Compose v2.39.2), which
+# would leak the host's GITHUB_PRIVATE_KEY_PATH into the container. Every core agentd variable is
+# therefore redeclared here; enterprise-only variables come from enterprise/compose.enterprise.yaml when it
+# is layered after this file.
+#
+# Credentials, in the order the signer tries them: EKS Pod Identity / ECS task role
+# (AWS_CONTAINER_CREDENTIALS_FULL_URI plus its authorization token file), IRSA web identity
+# (AWS_ROLE_ARN + AWS_WEB_IDENTITY_TOKEN_FILE, mount the projected token into the container),
+# then static keys (AWS_ACCESS_KEY_ID; avoid outside development). Grant the role kms:Sign on the
+# one key and nothing else. Set AGENTGATE_KMS_ENDPOINT only for a VPC endpoint or FIPS host.
+services:
+  agentd:
+    environment: !override
+      GITHUB_APP_ID: ${GITHUB_APP_ID:?Set GITHUB_APP_ID in .env}
+      AGENTGATE_CONFIG: /etc/agentgate/config.json
+      AGENTGATE_MAX_BODY_MIB: ${AGENTGATE_MAX_BODY_MIB:-32}
+      AGENTGATE_CLIENT_TOKEN_FILE: /run/secrets/agentgate_client_token
+      AGENTGATE_TLS_CERT_FILE: /run/secrets/agentgate_tls_cert
+      AGENTGATE_TLS_KEY_FILE: /run/secrets/agentgate_tls_key
+      AGENTGATE_PUBLIC_URL: https://agentd:7432
+      AGENTGATE_LFS_HOSTS: ${AGENTGATE_LFS_HOSTS:-}
+      AGENTGATE_LFS_MAX_OBJECT_MIB: ${AGENTGATE_LFS_MAX_OBJECT_MIB:-}
+      AGENTGATE_LFS_MAX_TRANSFERS: ${AGENTGATE_LFS_MAX_TRANSFERS:-}
+      AGENTGATE_MAX_CONCURRENT: ${AGENTGATE_MAX_CONCURRENT:-}
+      AGENTGATE_METRICS_HOST: 172.30.94.10
+      AGENTGATE_METRICS_PORT: 9464
+      AGENTGATE_MIRROR_DIR: /var/lib/agentgate-mirrors
+      AGENTGATE_KMS_KEY_ID: ${AGENTGATE_KMS_KEY_ID:?Set AGENTGATE_KMS_KEY_ID in .env}
+      AGENTGATE_KMS_ENDPOINT: ${AGENTGATE_KMS_ENDPOINT:-}
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_ROLE_ARN: ${AWS_ROLE_ARN:-}
+      AWS_WEB_IDENTITY_TOKEN_FILE: ${AWS_WEB_IDENTITY_TOKEN_FILE:-}
+      AWS_CONTAINER_CREDENTIALS_FULL_URI: ${AWS_CONTAINER_CREDENTIALS_FULL_URI:-}
+      AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE: ${AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE:-}
+    secrets: !override
+      - agentgate_client_token
+      - agentgate_tls_cert
+      - agentgate_tls_key

@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ -n "${AGENTGATE_CA_FILE:-}" ]; then export NODE_EXTRA_CA_CERTS="$AGENTGATE_CA_FILE"; fi
+# This command only ever talks to the broker and the model gateway, both reached directly; it has no
+# use for the egress proxy, and Node would print an experimental warning for reading it.
+unset NODE_USE_ENV_PROXY
+exec node /opt/agentgate/src/workspace-cli.js "$@"

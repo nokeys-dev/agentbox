@@ -1,0 +1,26 @@
+# Scoped, time-boxed Trivy exceptions. Every entry below affects only the
+# npm CLI bundled into examples/workspace.Dockerfile (agent workspaces need
+# npm; the root Dockerfile removes npm/npx/corepack entirely, so
+# ghcr.io/OWNER/agentgate never matches any of these). npm was pinned there to
+# 12.0.2 -- the latest release published to the npm registry as of
+# 2026-09-17 -- and no newer npm release exists yet that pulls in further
+# fixed versions of these three transitive dependencies.
+#
+# Before the expiry date below: run `npm view npm dist-tags.latest` and
+# `npm view npm@<latest> dependencies` (or just bump the pinned version in
+# examples/workspace.Dockerfile and rebuild), then re-run the local Trivy
+# scan. Only push the expiry date further if a fix genuinely still isn't
+# published; do not extend it just to keep CI green.
+
+# brace-expansion (transitive dependency of npm): no npm release bundles a
+# fix beyond 5.0.7 as of 2026-09-17.
+CVE-2026-14257 exp:2026-10-17
+CVE-2026-69152 exp:2026-10-17
+
+# ip-address (transitive dependency of npm): fixed upstream in 10.3.1, not
+# yet pulled into any published npm release as of 2026-09-17.
+CVE-2026-69192 exp:2026-10-17
+
+# tar (transitive dependency of npm): fixed upstream in 7.5.21, not yet
+# pulled into any published npm release as of 2026-09-17.
+CVE-2026-73566 exp:2026-10-17

@@ -1,0 +1,228 @@
+# Core stack: broker, isolated workspace, egress proxy, model gateway. This is what one developer
+# runs. The enterprise services (audit forwarding to a SIEM, the OIDC approval UI) live in
+# enterprise/compose.enterprise.yaml and are layered on with a second -f; see docs/workspace.md "Isolated Docker example".
+services:
+  agentd:
+    build: .
+    init: true
+    hostname: agentd
+    environment:
+      GITHUB_APP_ID: ${GITHUB_APP_ID:?Set GITHUB_APP_ID in .env}
+      GITHUB_PRIVATE_KEY_PATH: /run/secrets/github_app_key
+      AGENTGATE_CONFIG: /etc/agentgate/config.json
+      AGENTGATE_MAX_BODY_MIB: ${AGENTGATE_MAX_BODY_MIB:-32}
+      AGENTGATE_CLIENT_TOKEN_FILE: /run/secrets/agentgate_client_token
+      AGENTGATE_TLS_CERT_FILE: /run/secrets/agentgate_tls_cert
+      AGENTGATE_TLS_KEY_FILE: /run/secrets/agentgate_tls_key
+      AGENTGATE_PUBLIC_URL: https://agentd:7432
+      # Git LFS and concurrency settings; empty means the broker default (see .env.example).
+      AGENTGATE_LFS_HOSTS: ${AGENTGATE_LFS_HOSTS:-}
+      AGENTGATE_LFS_MAX_OBJECT_MIB: ${AGENTGATE_LFS_MAX_OBJECT_MIB:-}
+      AGENTGATE_LFS_MAX_TRANSFERS: ${AGENTGATE_LFS_MAX_TRANSFERS:-}
+      AGENTGATE_MAX_CONCURRENT: ${AGENTGATE_MAX_CONCURRENT:-}
+      # Bind /metrics only to agentd's static address on the `monitoring` network (see
+      # networks.monitoring below). 0.0.0.0 would also expose it on the workspace network.
+      AGENTGATE_METRICS_HOST: 172.30.94.10
+      AGENTGATE_METRICS_PORT: 9464
+      # Repository mirrors for content scanning hold full repository contents: keep them on a
+      # volume only agentd mounts (broker-state is also mounted by the forwarder and approval UI).
+      AGENTGATE_MIRROR_DIR: /var/lib/agentgate-mirrors
+    secrets:
+      - github_app_key
+      - agentgate_client_token
+      - agentgate_tls_cert
+      - agentgate_tls_key
+    volumes:
+      - type: bind
+        source: ${AGENTGATE_CONFIG:-./config.local.json}
+        target: /etc/agentgate/config.json
+        read_only: true
+        bind:
+          create_host_path: false
+      - broker-state:/var/lib/agentgate
+      # agentd only. Never mount this into another service.
+      - broker-mirrors:/var/lib/agentgate-mirrors
+    networks:
+      workspace: {}
+      upstream: {}
+      # Scoped to Prometheus scraping only; the workspace network must never reach /metrics
+      # (it is unauthenticated). The static address is what AGENTGATE_METRICS_HOST binds to, so
+      # the metrics listener exists only on this network. See docs/operations.md "Monitoring".
+      monitoring:
+        ipv4_address: 172.30.94.10
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "const u=process.env.AGENTGATE_TLS_CERT_FILE?'https':'http';import('node:'+u).then(m=>m.get({host:'127.0.0.1',port:7432,path:'/healthz',rejectUnauthorized:false},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1)))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    mem_limit: 512m
+    pids_limit: 128
+  workspace:
+    build:
+      context: .
+      dockerfile: examples/workspace.Dockerfile
+    init: true
+    environment:
+      AGENTGATE_URL: https://agentd:7432
+      AGENTGATE_GIT_NAME: ${AGENTGATE_GIT_NAME:-}
+      AGENTGATE_GIT_EMAIL: ${AGENTGATE_GIT_EMAIL:-}
+      AGENTGATE_CLIENT_TOKEN_FILE: /run/secrets/agentgate_client_token
+      AGENTGATE_CA_FILE: /run/secrets/agentgate_ca
+      # Exported as ANTHROPIC_AUTH_TOKEN for the model gateway; distinct from the agentd token.
+      AGENTGATE_MODEL_GATEWAY_TOKEN_FILE: /run/secrets/model_gateway_client_token
+      # Signed runtime assertion (identity.mode "assertion"); empty for static identity. After
+      # replacing the host file, run `agentgate renew` in the workspace (see README).
+      AGENTGATE_RUNTIME_ASSERTION_FILE: /run/secrets/agentgate_runtime_assertion
+      # All non-broker egress goes through the allowlisting CONNECT proxy (see README
+      # "Workspace egress proxy"); the workspace network itself has no route out.
+      HTTPS_PROXY: http://egress-proxy:3128
+      HTTP_PROXY: http://egress-proxy:3128
+      https_proxy: http://egress-proxy:3128
+      http_proxy: http://egress-proxy:3128
+      NO_PROXY: agentd,model-gateway
+      no_proxy: agentd,model-gateway
+      # Node's built-in fetch and http clients ignore the proxy variables unless told to read
+      # them; without this, Node-based tools cannot reach even allowlisted hosts.
+      NODE_USE_ENV_PROXY: "1"
+      # Model API calls go to the gateway, which swaps the model-gateway client token (exported as
+      # ANTHROPIC_AUTH_TOKEN by workspace-entrypoint.sh) for the real provider key.
+      ANTHROPIC_BASE_URL: http://model-gateway:7434/anthropic
+    # Docker's embedded resolver still answers service names (agentd, egress-proxy) but forwards
+    # external names to 127.0.0.1, where nothing listens: closes the DNS exfiltration channel.
+    # The proxy resolves allowlisted names itself.
+    dns:
+      - 127.0.0.1
+    secrets:
+      - agentgate_client_token
+      - agentgate_ca
+      - model_gateway_client_token
+      # Workspace only: agentd verifies it with the issuer public keys in its config.
+      - agentgate_runtime_assertion
+    depends_on:
+      agentd:
+        condition: service_healthy
+      egress-proxy:
+        condition: service_healthy
+      model-gateway:
+        condition: service_healthy
+    networks:
+      - workspace
+    volumes:
+      - workspace-data:/workspace
+      - workspace-home:/home/node
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: ${WORKSPACE_MEMORY_LIMIT:-4g}
+    pids_limit: 512
+  egress-proxy:
+    build: .
+    init: true
+    command: ["node", "src/egress-proxy.js"]
+    environment:
+      AGENTGATE_EGRESS_CONFIG: /etc/agentgate/egress.json
+      AGENTGATE_EGRESS_PORT: 3128
+    volumes:
+      - type: bind
+        source: ${AGENTGATE_EGRESS_CONFIG_PATH:-./examples/egress.json}
+        target: /etc/agentgate/egress.json
+        read_only: true
+        bind:
+          create_host_path: false
+    # The only service bridging `workspace` to the internet, and only for allowlisted host:port
+    # CONNECT tunnels to vetted public addresses. GitHub is always denied (broker only).
+    networks:
+      - workspace
+      - upstream
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('node:net').connect(3128,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    mem_limit: 256m
+    pids_limit: 64
+  model-gateway:
+    build: .
+    init: true
+    command: ["node", "src/model-gateway.js"]
+    environment:
+      AGENTGATE_MODEL_GATEWAY_CONFIG: /etc/agentgate/model-gateway.json
+      AGENTGATE_MODEL_GATEWAY_PORT: 7434
+      # Its own token: the gateway never holds agentd's workspace client token.
+      AGENTGATE_MODEL_GATEWAY_CLIENT_TOKEN_FILE: /run/secrets/model_gateway_client_token
+    secrets:
+      # Provider keys live only here; the workspace never mounts them.
+      - anthropic_api_key
+      - model_gateway_client_token
+    volumes:
+      - type: bind
+        source: ${AGENTGATE_MODEL_GATEWAY_CONFIG_PATH:-./examples/model-gateway.json}
+        target: /etc/agentgate/model-gateway.json
+        read_only: true
+        bind:
+          create_host_path: false
+    # Reachable from `workspace` by service name (like agentd); only its own requests leave via
+    # `upstream`. Plain HTTP on the internal network: see docs/workspace.md "Model API gateway" for TLS.
+    networks:
+      - workspace
+      - upstream
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('node:net').connect(7434,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    # Room for maxConcurrent (8) x maxRequestBytes (8 MiB) x 2 (buffer plus upstream copy) = 128 MiB.
+    mem_limit: 384m
+    pids_limit: 64
+networks:
+  workspace:
+    internal: true
+  upstream: {}
+  # Prometheus scrape network only. Never attach `workspace` to this network: /metrics is
+  # unauthenticated, so anything that can reach it can read decision/approval/audit-lag counters.
+  # Fixed subnet so agentd's metrics listener can bind to a known address on this network only.
+  # Change both this subnet and agentd's ipv4_address/AGENTGATE_METRICS_HOST if it collides.
+  monitoring:
+    ipam:
+      config:
+        - subnet: 172.30.94.0/24
+volumes:
+  broker-state: {}
+  broker-mirrors: {}
+  workspace-data: {}
+  workspace-home: {}
+secrets:
+  github_app_key:
+    file: ${GITHUB_PRIVATE_KEY_PATH:?Set GITHUB_PRIVATE_KEY_PATH in .env}
+  agentgate_client_token:
+    file: ${AGENTGATE_CLIENT_TOKEN_PATH:?Set AGENTGATE_CLIENT_TOKEN_PATH in .env}
+  agentgate_tls_cert:
+    file: ${AGENTGATE_TLS_CERT_PATH:?Set AGENTGATE_TLS_CERT_PATH in .env}
+  agentgate_tls_key:
+    file: ${AGENTGATE_TLS_KEY_PATH:?Set AGENTGATE_TLS_KEY_PATH in .env}
+  agentgate_ca:
+    file: ${AGENTGATE_CA_PATH:?Set AGENTGATE_CA_PATH in .env}
+  model_gateway_client_token:
+    file: ${AGENTGATE_MODEL_GATEWAY_CLIENT_TOKEN_PATH:?Set AGENTGATE_MODEL_GATEWAY_CLIENT_TOKEN_PATH in .env}
+  anthropic_api_key:
+    file: ${ANTHROPIC_API_KEY_PATH:?Set ANTHROPIC_API_KEY_PATH in .env}
+  agentgate_runtime_assertion:
+    file: ${AGENTGATE_RUNTIME_ASSERTION_PATH:-/dev/null}

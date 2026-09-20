@@ -1,0 +1,18 @@
+# Override: run a prebuilt workspace image (a profile such as
+# examples/workspace-claude-code.Dockerfile, or a signed ghcr.io digest) instead of building
+# examples/workspace.Dockerfile from this checkout.
+#
+# Usage:
+#   docker build --tag agentgate-workspace:local --file examples/workspace.Dockerfile .
+#   docker build --tag agentgate-workspace-claude:local --file examples/workspace-claude-code.Dockerfile .
+#   echo "AGENTGATE_WORKSPACE_IMAGE=agentgate-workspace-claude:local" >> .env
+#   docker compose -f compose.yaml -f compose.workspace-image.yaml up -d
+#
+# `build` is cleared (`!reset`) rather than left in place so that `up --build` cannot rebuild the
+# base Dockerfile under the profile's tag and silently replace it. Everything else about the
+# workspace service (networks, secrets, capability drops, limits) is inherited from compose.yaml,
+# so a profile cannot widen the workspace's privileges by being selected here.
+services:
+  workspace:
+    build: !reset null
+    image: ${AGENTGATE_WORKSPACE_IMAGE:?Set AGENTGATE_WORKSPACE_IMAGE in .env to the workspace image to run}
