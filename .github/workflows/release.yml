@@ -189,7 +189,7 @@ jobs:
           sh scripts/release/deb.sh "$version" dist/nokeys-*.tgz dist/agentbox-linux-x64 dist
           node scripts/release/manifests.js "$version" "${{ needs.package.outputs.tarball_sha }}" "$(sha256sum dist/agentbox-windows-x64.exe | cut -d' ' -f1)" dist/manifests
           (cd dist && sha256sum agentbox-* nokeys-*.tgz *.deb > SHA256SUMS)
-      - uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
         with:
           files: |
             dist/agentbox-*
