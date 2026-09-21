@@ -2,7 +2,7 @@
 // the CLI bundled into a copy of the running node binary. The result needs no Node on the target
 // machine; it still needs Docker for the workspace. Run on each target OS (the release workflow
 // uses Linux, macOS, and Windows runners). Usage: node scripts/release/sea.js <output path>
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -40,7 +40,14 @@ writeFileSync(join(work, 'sea-config.json'), JSON.stringify({ main: join(work, '
 execFileSync(process.execPath, ['--experimental-sea-config', join(work, 'sea-config.json')], { stdio: 'inherit' });
 copyFileSync(process.execPath, output);
 if (process.platform === 'darwin') execFileSync('codesign', ['--remove-signature', output], { stdio: 'inherit' });
-execFileSync('npx', ['--yes', 'postject@1.0.0-alpha.6', output, 'NODE_SEA_BLOB', join(work, 'sea-prep.blob'), '--sentinel-fuse', 'NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2', ...(process.platform === 'darwin' ? ['--macho-segment-name', 'NODE_SEA'] : [])], { stdio: 'inherit' });
+// postject does the injecting, and npx fetches it. On Windows the launcher is npx.cmd, which
+// cannot be spawned without a shell (ENOENT as 'npx', EINVAL as 'npx.cmd' since Node's fix for
+// CVE-2024-27980), and a shell would put every path through cmd.exe quoting. So npx's own
+// JavaScript entry point is run with this node binary, which needs no shell on any platform.
+const npxCli = [join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npx-cli.js'),
+  join(dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npx-cli.js')].find(existsSync);
+if (!npxCli) throw new Error('could not find npx-cli.js next to this node binary; install npm alongside node');
+execFileSync(process.execPath, [npxCli, '--yes', 'postject@1.0.0-alpha.6', output, 'NODE_SEA_BLOB', join(work, 'sea-prep.blob'), '--sentinel-fuse', 'NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2', ...(process.platform === 'darwin' ? ['--macho-segment-name', 'NODE_SEA'] : [])], { stdio: 'inherit' });
 if (process.platform === 'darwin') execFileSync('codesign', ['--sign', '-', output], { stdio: 'inherit' });
 rmSync(work, { recursive: true, force: true });
 console.log(`built ${output} from node ${process.version}`);

@@ -68,3 +68,37 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
           trivyignores: examples/workspace.trivyignore
+
+  # The single-file executables are built by the release workflow, which runs only on a tag: a
+  # platform-specific break in that build stays invisible until a release. Building them here on
+  # every platform, and running the result, moves that failure to the change that causes it.
+  # Only in a public repository, where these runners are free; the private one covers Linux above.
+  executables:
+    if: ${{ github.event.repository.private == false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux-x64
+          - os: macos-latest
+            name: darwin-arm64
+          - os: windows-latest
+            name: windows-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - run: node scripts/release/sea.js dist/agentbox-${{ matrix.name }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+      - name: The executable runs and reaches the package
+        env:
+          AGENTBOX_HOME: ${{ github.workspace }}
+        shell: bash
+        run: |
+          binary=dist/agentbox-${{ matrix.name }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+          test "$("./$binary" --version)" = "$(node -p "require('./package.json').version")"
+          "./$binary" --help | grep -q 'agentbox init'
+          "./$binary" bogus && exit 1 || test $? -eq 2

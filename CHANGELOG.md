@@ -5,6 +5,22 @@ All notable changes to AgentBox. Format follows Keep a Changelog; versions follo
 
 ## Unreleased
 
+## 0.2.1 - 2026-09-21
+
+### Fixed
+- The Windows single-file executable was never built. `npx` is `npx.cmd` there, which cannot be
+  spawned without a shell, so the release failed before `postject` ran and took the macOS
+  executable and the release assets down with it. The build now runs npx's own JavaScript entry
+  point with the node binary, on every platform and without a shell. 0.2.0 shipped on npm and as
+  container images; this release adds the executables, the Debian package, and the manifests.
+
+### Changed
+- CI builds and runs the single-file executable on Linux, macOS, and Windows, so a
+  platform-specific break in that build surfaces on the change that causes it rather than at a
+  release. One platform's failure no longer cancels the others.
+- A release re-run skips the npm publish when the version is already on the registry, instead of
+  failing the whole run.
+
 ## 0.2.0 - 2026-09-19
 
 AgentBox is open core from this release. This changelog covers the open-source edition; entries

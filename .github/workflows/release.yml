@@ -130,21 +130,31 @@ jobs:
       # the token itself reaches the one step that publishes with it, never the install or tests.
       - id: npm
         run: echo "has_token=${{ secrets.NPM_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
+      # A version already on the registry cannot be republished, so a re-run of a release that got
+      # past this step must skip it instead of failing the whole run.
+      - id: published
+        run: |
+          version=$(node -p "require('./package.json').version")
+          name=$(node -p "require('./package.json').name")
+          if npm view "$name@$version" version >/dev/null 2>&1; then echo "already=true" >> "$GITHUB_OUTPUT"; else echo "already=false" >> "$GITHUB_OUTPUT"; fi
       - name: Publish to npm with a token, with provenance
-        if: ${{ steps.npm.outputs.has_token == 'true' }}
+        if: ${{ steps.npm.outputs.has_token == 'true' && steps.published.outputs.already == 'false' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish "${{ steps.pack.outputs.file }}" --provenance --access public
       # Trusted publishing needs npm 11.5.1 or newer; this is npm's documented setup (setup-node with
       # a registry-url, then a plain publish). Provenance is attached automatically.
       - name: Publish to npm by trusted publishing
-        if: ${{ steps.npm.outputs.has_token != 'true' && vars.NPM_TRUSTED_PUBLISHING == 'true' }}
+        if: ${{ steps.npm.outputs.has_token != 'true' && vars.NPM_TRUSTED_PUBLISHING == 'true' && steps.published.outputs.already == 'false' }}
         run: |
           npm install -g npm@^11.5.1
           npm publish "${{ steps.pack.outputs.file }}" --access public
   binaries:
     needs: package
     strategy:
+      # One platform's failure must not cancel the others: the point of this job is to learn which
+      # platforms build, and a cancelled sibling hides that.
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
