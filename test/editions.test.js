@@ -4,7 +4,7 @@ import { existsSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { edition, requireEdition } from '../src/extensions.js';
 import { validateConfig } from '../src/config.js';
-import { exampleConfig } from './support/fixture.js';
+import { exampleConfig } from '../scripts/support/fixture.js';
 import { baseEnv, makeTokenFile, spawnDaemon, tempDir } from './support/daemon-harness.js';
 
 // This file runs in both trees. The open-source tree has no enterprise/ directory; the commercial

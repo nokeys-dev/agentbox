@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { issueAssertion } from '../src/assertion.js';
 import { validateConfig } from '../src/config.js';
-import { exampleConfig, fixture } from './support/fixture.js';
+import { exampleConfig, fixture } from '../scripts/support/fixture.js';
 
 const { privateKey, publicKey } = generateKeyPairSync('ed25519');
 const clientToken = 'delegation-client-token-0123456789abcdef';

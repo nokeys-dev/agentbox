@@ -1,6 +1,6 @@
 {
   "name": "@nokeys/agentbox",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "AgentBox by NoKeys: everything your agent needs, nothing it shouldn't have. A governed workspace for AI agents with identity, policy, approvals, and audit; credentials never enter the workspace.",
   "license": "Apache-2.0",
   "homepage": "https://nokeys.dev",

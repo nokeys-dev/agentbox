@@ -5,6 +5,14 @@ All notable changes to AgentBox. Format follows Keep a Changelog; versions follo
 
 ## Unreleased
 
+## 0.2.2 - 2026-09-21
+
+### Fixed
+- `agentbox demo` failed from the installed package with `ERR_MODULE_NOT_FOUND`: it imported its
+  harness from `test/`, which the package deliberately does not ship. The harness now lives in
+  `scripts/support/fixture.js`, which does ship, and the package test runs the demo from an
+  installed copy so this cannot pass unnoticed again. The demo is the first thing a new user runs.
+
 ## 0.2.1 - 2026-09-21
 
 ### Fixed

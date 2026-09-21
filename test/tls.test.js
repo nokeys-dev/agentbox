@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, statSync } from 'node:fs';
 import { request } from 'node:https';
 import { join } from 'node:path';
-import { fixture } from './support/fixture.js';
+import { fixture } from '../scripts/support/fixture.js';
 
 function hasOpenssl() {
   try { execFileSync('openssl', ['version'], { stdio: 'ignore' }); return true; } catch { return false; }

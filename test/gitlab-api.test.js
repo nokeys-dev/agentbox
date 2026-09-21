@@ -4,7 +4,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { join, resolve } from 'node:path';
 import { readFile, writeFile } from 'node:fs/promises';
-import { fixture } from './support/fixture.js';
+import { fixture } from '../scripts/support/fixture.js';
 import { adminRequest } from '../src/admin-client.js';
 import { gitlabForkHead, mergeRequestPayload, projectGitlabResponse, routeGitlabApi } from '../src/gitlab-api.js';
 import { verifyProtectedBranches } from '../src/rulesets.js';

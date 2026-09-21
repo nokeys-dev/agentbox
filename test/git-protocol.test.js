@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parsePush, parsePushRequest, validateRef } from '../src/git-protocol.js';
-import { packet, pushBody } from './support/fixture.js';
+import { packet, pushBody } from '../scripts/support/fixture.js';
 
 const zero = '0'.repeat(40);
 const one = '1'.repeat(40);

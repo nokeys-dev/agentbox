@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { Mirror } from '../src/mirror.js';
 import { MAX_SECRET_SCAN_BYTES, pathAllowed, pathBlocked, scanPush } from '../src/scan.js';
 import { validateConfig } from '../src/config.js';
-import { exampleConfig, fixture, packet } from './support/fixture.js';
+import { exampleConfig, fixture, packet } from '../scripts/support/fixture.js';
 
 // Obviously fake secrets, assembled at runtime so this file itself never matches the scanner.
 const fakeAws = () => ['AK', 'IA', 'ABCDEFGHIJKLMNOP'].join('');
@@ -277,7 +277,7 @@ test('scan path patterns reject "." and empty segments that could never match a 
 
 test('a mirror sync failure does not spend an approval grant for a scanned push', async (t) => {
   const { adminRequest } = await import('../src/admin-client.js');
-  const { pushBody } = await import('./support/fixture.js');
+  const { pushBody } = await import('../scripts/support/fixture.js');
   const { GateError } = await import('../src/errors.js');
   const config = exampleConfig();
   config.repositories[0].scan = { secrets: true };

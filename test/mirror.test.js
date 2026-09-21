@@ -5,7 +5,7 @@ import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { Readable } from 'node:stream';
 import { Mirror, mirrorDirectory } from '../src/mirror.js';
-import { fixture, packet } from './support/fixture.js';
+import { fixture, packet } from '../scripts/support/fixture.js';
 
 const repository = { name: 'acme/demo', id: 1, installationId: 2 };
 const zero = '0'.repeat(40);

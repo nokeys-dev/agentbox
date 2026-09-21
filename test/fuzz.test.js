@@ -18,7 +18,7 @@ import { execFileSync } from 'node:child_process';
 import { GateError } from '../src/errors.js';
 import { parsePush, parsePushRequest } from '../src/git-protocol.js';
 import { pullRequestPayload, forkHead, routeApi, commentPayload, reviewPayload, mergePayload } from '../src/github-api.js';
-import { packet } from './support/fixture.js';
+import { packet } from '../scripts/support/fixture.js';
 import { prng } from './support/prng.js';
 
 const iterations = Number(process.env.FUZZ_ITERATIONS || 300);

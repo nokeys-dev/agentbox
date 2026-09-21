@@ -7,7 +7,7 @@ import { createServer } from 'node:net';
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { fixture } from './support/fixture.js';
+import { fixture } from '../scripts/support/fixture.js';
 import { issueAssertion } from '../src/assertion.js';
 
 const execute = promisify(execFile);

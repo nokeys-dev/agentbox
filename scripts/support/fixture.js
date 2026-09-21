@@ -1,3 +1,6 @@
+// A broker with a local Git remote and a temporary state directory, used both by `npm run demo`
+// (so it ships in the package) and by the test suite. It starts the real server and speaks real
+// Git over HTTP; nothing here is a stub.
 import { execFile, spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { promisify } from 'node:util';

@@ -4,7 +4,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { resolve, join } from 'node:path';
 import { access, readFile, writeFile } from 'node:fs/promises';
-import { fixture, exampleConfig } from './support/fixture.js';
+import { fixture, exampleConfig } from '../scripts/support/fixture.js';
 import { adminRequest } from '../src/admin-client.js';
 import { routeApi, projectApiResponse, commentPayload, reviewPayload, pullRequestPayload, mergePayload, LOG_HOST_PATTERN } from '../src/github-api.js';
 import { validateConfig } from '../src/config.js';

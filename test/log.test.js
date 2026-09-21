@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PassThrough, Writable } from 'node:stream';
 import { createLogger, redact } from '../src/log.js';
-import { fixture } from './support/fixture.js';
+import { fixture } from '../scripts/support/fixture.js';
 
 function capture() {
   const stream = new PassThrough();

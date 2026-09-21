@@ -50,6 +50,9 @@ try {
     '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges:true',
     '--mount', `type=bind,source=${resolve('src')},target=/app/src,readonly`,
     '--mount', `type=bind,source=${resolve('test')},target=/app/test,readonly`,
+    // docker-broker.js imports the shared fixture, which lives with the demo's harness so that
+    // the published package can run the demo.
+    '--mount', `type=bind,source=${resolve('scripts', 'support')},target=/app/scripts/support,readonly`,
     '--mount', `type=bind,source=${resolve('package.json')},target=/app/package.json,readonly`,
     '--mount', `type=bind,source=${state},target=/fleet,readonly`,
     '--env', 'AGENTGATE_SMOKE_FLEET=1', '--env', `AGENTGATE_SMOKE_ISSUER_PUBLIC_KEY=${publicKey.export({ type: 'spki', format: 'pem' })}`,

@@ -5,7 +5,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Registry } from '../src/metrics.js';
-import { fixture, pushBody } from './support/fixture.js';
+import { fixture, pushBody } from '../scripts/support/fixture.js';
 
 test('registry renders counters, gauges, and cumulative histograms in Prometheus format', () => {
   const registry = new Registry();

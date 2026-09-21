@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { readFile, rm } from 'node:fs/promises';
 import { createClientAuth, loadClientToken } from '../src/client-auth.js';
 import { clientAuthHeader } from '../src/workspace-config.js';
-import { fixture } from './support/fixture.js';
+import { fixture } from '../scripts/support/fixture.js';
 
 const token = 'a'.repeat(64);
 

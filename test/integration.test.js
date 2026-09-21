@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { adminRequest } from '../src/admin-client.js';
-import { fixture, packet, pushBody } from './support/fixture.js';
+import { fixture, packet, pushBody } from '../scripts/support/fixture.js';
 
 test('real Git clone, fetch, branch push, main approval and tag denial', async (t) => {
   const f = await fixture();
@@ -133,7 +133,7 @@ test('audit failure prevents even a policy-allowed request from reaching the pro
 });
 
 test('push options are allowlisted per repository and shallow clones can push', async (t) => {
-  const { exampleConfig } = await import('./support/fixture.js');
+  const { exampleConfig } = await import('../scripts/support/fixture.js');
   const config = exampleConfig();
   config.repositories[0].allowedPushOptions = ['ci.skip', 'merge_request.*'];
   const f = await fixture({ config });
@@ -154,7 +154,7 @@ test('push options are allowlisted per repository and shallow clones can push', 
 });
 
 test('an allowlisted push option requiring approval never has its value stored in audit, approvals.json, or admin GET /approvals', async (t) => {
-  const { exampleConfig } = await import('./support/fixture.js');
+  const { exampleConfig } = await import('../scripts/support/fixture.js');
   const config = exampleConfig();
   config.repositories[0].allowedPushOptions = ['ci.skip', 'merge_request.*'];
   const f = await fixture({ config });
@@ -192,7 +192,7 @@ test('an allowlisted push option requiring approval never has its value stored i
 });
 
 test('approving a push binds the exact push options requested; a different (or missing) option set needs a new approval', async (t) => {
-  const { exampleConfig } = await import('./support/fixture.js');
+  const { exampleConfig } = await import('../scripts/support/fixture.js');
   const config = exampleConfig();
   config.repositories[0].allowedPushOptions = ['ci.skip', 'merge_request.*'];
   const f = await fixture({ config });
@@ -240,7 +240,7 @@ test('approving a push binds the exact push options requested; a different (or m
 });
 
 test('a real git push of an NFC Unicode branch name is opt-in per repository', async (t) => {
-  const { exampleConfig } = await import('./support/fixture.js');
+  const { exampleConfig } = await import('../scripts/support/fixture.js');
   // U+00E9 (precomposed 'é'), already NFC-normalized -- matches "refs/heads/agent/*" and only
   // needs Unicode support, not any other policy change, to be pushable.
   const branch = 'agent/café';

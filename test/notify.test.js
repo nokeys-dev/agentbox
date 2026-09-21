@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createNotifier } from '../src/notify.js';
-import { fixture, pushBody, exampleConfig } from './support/fixture.js';
+import { fixture, pushBody, exampleConfig } from '../scripts/support/fixture.js';
 
 const silent = { info() {}, warn() {}, error() {} };
 

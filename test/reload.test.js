@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { adminRequest } from '../src/admin-client.js';
 import { reloadConfig } from '../src/reload.js';
-import { exampleConfig, fixture, pushBody } from './support/fixture.js';
+import { exampleConfig, fixture, pushBody } from '../scripts/support/fixture.js';
 
 test('reload swaps validated policy, rejects invalid config, and invalidates prior approvals', async (t) => {
   let forwarded = 0;

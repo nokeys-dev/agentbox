@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { createAssertionVerifier, issueAssertion, strictJson, verifyAssertion } from '../src/assertion.js';
 import { adminRequest } from '../src/admin-client.js';
 import { validateConfig } from '../src/config.js';
-import { exampleConfig, fixture, pushBody } from './support/fixture.js';
+import { exampleConfig, fixture, pushBody } from '../scripts/support/fixture.js';
 
 const execute = promisify(execFile);
 const { privateKey, publicKey } = generateKeyPairSync('ed25519');

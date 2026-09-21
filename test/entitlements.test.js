@@ -58,7 +58,7 @@ test('GitHub org tokens omit repository_ids, are cached apart from repository to
 
 // ---- Through the broker ------------------------------------------------------------------------
 
-const { exampleConfig, fixture, pushBody } = await import('./support/fixture.js');
+const { exampleConfig, fixture, pushBody } = await import('../scripts/support/fixture.js');
 const { adminRequest } = await import('../src/admin-client.js');
 const { issueAssertion } = await import('../src/assertion.js');
 const { generateKeyPairSync, createHash } = await import('node:crypto');

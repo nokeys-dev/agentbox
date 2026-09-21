@@ -26,6 +26,10 @@ test('the published package installs an agentbox command that initialises a proj
   assert.ok(pkg.startsWith(join(prefix, 'lib', 'node_modules', '@nokeys', 'agentbox')), `package installed under the prefix: ${pkg}`);
   for (const file of ['compose.yaml', 'examples/config.json', 'scripts/bootstrap-dev.sh', 'Dockerfile', 'LICENSE']) assert.ok((await stat(join(pkg, file))).isFile(), file);
   assert.ok(!(await readdir(pkg)).includes('test'), 'tests are not shipped');
+  // The demo is the first thing a new user runs, and it needs its harness: run it from the
+  // installed package, not from a checkout, or a missing file here is invisible until a release.
+  const { stdout: demo } = await execute(agentbox, ['demo'], { env, cwd: work, timeout: 240_000 });
+  for (const line of [/1\. Cloned through AgentBox without a provider credential\./, /Push to main blocked/, /Approval consumed/]) assert.match(demo, line);
 
   const project = join(work, 'project');
   const { stdout: init } = await execute(agentbox, ['init', project], { env });

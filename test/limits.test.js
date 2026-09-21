@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RateLimiter } from '../src/limits.js';
-import { fixture } from './support/fixture.js';
+import { fixture } from '../scripts/support/fixture.js';
 
 test('token bucket refills over time and isolates keys', () => {
   let now = 0;

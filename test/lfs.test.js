@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { validateConfig } from '../src/config.js';
 import { createLogger } from '../src/log.js';
-import { exampleConfig, fixture } from './support/fixture.js';
+import { exampleConfig, fixture } from '../scripts/support/fixture.js';
 
 const oid = 'a'.repeat(64);
 const batch = (operation, objects = [{ oid, size: 3 }]) => Buffer.from(JSON.stringify({ operation, transfers: ['basic'], objects }));

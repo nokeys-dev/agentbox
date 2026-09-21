@@ -4,7 +4,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { fixture, exampleConfig } from './support/fixture.js';
+import { fixture, exampleConfig } from '../scripts/support/fixture.js';
 
 const execute = promisify(execFile);
 const setup = resolve('src/workspace-setup.js');

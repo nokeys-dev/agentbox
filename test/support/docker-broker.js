@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { loadRevocationsFile } from '../../src/revocations.js';
-import { exampleConfig, fixture } from './fixture.js';
+import { exampleConfig, fixture } from '../../scripts/support/fixture.js';
 
 // Credential-free upstream for the Docker smoke tests, never a deployment entrypoint.
 const config = exampleConfig();

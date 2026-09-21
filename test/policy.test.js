@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateConfig } from '../src/config.js';
 import { decide, decidePush } from '../src/policy.js';
-import { exampleConfig } from './support/fixture.js';
+import { exampleConfig } from '../scripts/support/fixture.js';
 
 test('policy defaults to deny and constrains repository and branch access', () => {
   const config = validateConfig(exampleConfig());

@@ -8,7 +8,7 @@ import { Readable } from 'node:stream';
 import { join } from 'node:path';
 import { commandSectionEnd, createCommandSectionScanner, parsePushRequest } from '../src/git-protocol.js';
 import { readPush } from '../src/push-stream.js';
-import { fixture, packet, pushBody } from './support/fixture.js';
+import { fixture, packet, pushBody } from '../scripts/support/fixture.js';
 
 const oid = (c) => c.repeat(40);
 

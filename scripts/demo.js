@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { fixture } from '../test/support/fixture.js';
+import { fixture } from './support/fixture.js';
 import { adminRequest } from '../src/admin-client.js';
 
 const f = await fixture();
