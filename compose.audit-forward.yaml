@@ -1,0 +1,47 @@
+# Override: ship the hash-chained audit log to a SIEM as a service, instead of running
+# `npm run audit:forward` by hand. Layer it on the core stack; it is selected automatically by the
+# agentbox command when AGENTGATE_AUDIT_SINK_URL is set in the project's .env.
+#
+# Usage:
+#   echo "AGENTGATE_AUDIT_SINK_URL=https://siem.example.com/services/collector/raw" >> .env
+#   echo "AGENTGATE_AUDIT_SINK_TOKEN_PATH=/home/you/.agentgate/audit-sink-token" >> .env
+#   docker compose -f compose.yaml -f compose.audit-forward.yaml up -d
+#
+# The forwarder reads the broker's state read-only and keeps its own checkpoint, which agentd reads
+# (also read-only) to report forward lag as a metric. See docs/operations.md "Audit forwarding".
+services:
+  agentd:
+    environment:
+      AGENTGATE_AUDIT_CHECKPOINT_PATH: /var/lib/agentgate-forward/audit-forward.json
+    volumes:
+      # Read-only: agentd only reads the forwarder's checkpoint; it never writes to this volume.
+      - audit-forward-state:/var/lib/agentgate-forward:ro
+  audit-forwarder:
+    build: .
+    init: true
+    command: ["node", "scripts/audit-forward.js"]
+    environment:
+      AGENTGATE_STATE_DIR: /var/lib/agentgate
+      AGENTGATE_AUDIT_SINK_URL: ${AGENTGATE_AUDIT_SINK_URL:?Set AGENTGATE_AUDIT_SINK_URL in .env}
+      AGENTGATE_AUDIT_SINK_TOKEN_FILE: /run/secrets/audit_sink_token
+      AGENTGATE_AUDIT_CHECKPOINT_PATH: /var/lib/agentgate-forward/audit-forward.json
+    secrets:
+      - audit_sink_token
+    volumes:
+      # Read-only: a compromised forwarder (it sits on the internet-facing upstream network)
+      # must never be able to write approvals.json or the audit files themselves.
+      - broker-state:/var/lib/agentgate:ro
+      - audit-forward-state:/var/lib/agentgate-forward
+    networks:
+      - upstream
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+volumes:
+  audit-forward-state: {}
+secrets:
+  audit_sink_token:
+    file: ${AGENTGATE_AUDIT_SINK_TOKEN_PATH:?Set AGENTGATE_AUDIT_SINK_TOKEN_PATH in .env}

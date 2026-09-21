@@ -57,7 +57,9 @@ const baseFileNames = (settings, { enterprise = false, kms = false } = {}) => {
   const useEnterprise = enterprise || /^(1|true|yes)$/i.test(settings.AGENTBOX_ENTERPRISE ?? '');
   // The enterprise services are the commercial edition (enterprise/); the open-source package has none.
   if (useEnterprise && !commercial) { console.error('agentbox: the enterprise services (--enterprise, AGENTBOX_ENTERPRISE) require the AgentBox commercial edition (https://nokeys.dev)'); process.exit(2); }
-  return ['compose.yaml', ...(useKms ? ['compose.kms.yaml'] : []), ...(useEnterprise ? [ENTERPRISE_COMPOSE] : [])];
+  // Audit forwarding is open source and selected by its own setting, in either edition.
+  const forward = settings.AGENTGATE_AUDIT_SINK_URL || process.env.AGENTGATE_AUDIT_SINK_URL ? ['compose.audit-forward.yaml'] : [];
+  return ['compose.yaml', ...(useKms ? ['compose.kms.yaml'] : []), ...forward, ...(useEnterprise ? [ENTERPRISE_COMPOSE] : [])];
 };
 const composeFiles = (flags) => baseFileNames(projectSettings(), flags).map((file) => join(root, file));
 
@@ -110,6 +112,7 @@ function preflight({ kms = false } = {}) {
     if ((key.endsWith('_PATH') || key === 'AGENTGATE_CONFIG') && value && !isAbsolute(value)) problems.push(`${key}=${value} is a relative path, which Compose would resolve inside the agentbox package; use ${resolve(project, value)}`);
   }
   for (const key of ['GITHUB_APP_ID', 'AGENTGATE_GIT_NAME', 'AGENTGATE_GIT_EMAIL']) if (!env[key]) problems.push(`${key} is not set in .env.`);
+  if (env.AGENTGATE_AUDIT_SINK_URL && !env.AGENTGATE_AUDIT_SINK_TOKEN_PATH) problems.push('AGENTGATE_AUDIT_SINK_URL is set but AGENTGATE_AUDIT_SINK_TOKEN_PATH is not; the forwarder needs the sink credential.');
   for (const key of ['GITHUB_PRIVATE_KEY_PATH', 'ANTHROPIC_API_KEY_PATH', 'AGENTGATE_CLIENT_TOKEN_PATH', 'AGENTGATE_MODEL_GATEWAY_CLIENT_TOKEN_PATH', 'AGENTGATE_CA_PATH', 'AGENTGATE_TLS_CERT_PATH', 'AGENTGATE_TLS_KEY_PATH', 'AGENTGATE_CONFIG']) {
     const value = env[key];
     if (!value) { problems.push(`${key} is not set in .env.`); continue; }
@@ -162,10 +165,11 @@ function check(options) {
 function overrideFiles(settings, { enterprise = false } = {}) {
   const has = (key) => Boolean(settings[key] || process.env[key]);
   const pair = (name) => [`compose.${name}.yaml`, ...(enterprise ? [join('enterprise', `compose.${name}.enterprise.yaml`)] : [])];
+  const forwarding = has('AGENTGATE_AUDIT_SINK_URL');
   return [
     ...(has('AGENTGATE_IMAGE') ? pair('broker-image') : []),
     ...(has('AGENTGATE_WORKSPACE_IMAGE') ? ['compose.workspace-image.yaml'] : []),
-    ...(has('AGENTGATE_CORPORATE_PROXY') ? pair('corporate-proxy') : []),
+    ...(has('AGENTGATE_CORPORATE_PROXY') ? [...pair('corporate-proxy'), ...(forwarding ? ['compose.corporate-proxy.audit-forward.yaml'] : [])] : []),
     ...(has('AGENTGATE_CORPORATE_CA_PATH') ? ['compose.corporate-ca.yaml'] : [])
   ];
 }

@@ -1,0 +1,14 @@
+# The audit forwarder's half of compose.corporate-proxy.yaml. Separate because the forwarder is
+# itself an override (compose.audit-forward.yaml), and an override that names a service the other
+# files do not define would create that service. The agentbox command layers it when both
+# AGENTGATE_CORPORATE_PROXY and AGENTGATE_AUDIT_SINK_URL are set; by hand:
+#
+#   docker compose -f compose.yaml -f compose.audit-forward.yaml \
+#     -f compose.corporate-proxy.yaml -f compose.corporate-proxy.audit-forward.yaml up -d
+services:
+  audit-forwarder:
+    environment:
+      NODE_USE_ENV_PROXY: "1"
+      HTTPS_PROXY: ${AGENTGATE_CORPORATE_PROXY:?Set AGENTGATE_CORPORATE_PROXY in .env to your forward proxy, such as http://proxy.example.com:8080}
+      HTTP_PROXY: ${AGENTGATE_CORPORATE_PROXY:?Set AGENTGATE_CORPORATE_PROXY in .env to your forward proxy, such as http://proxy.example.com:8080}
+      NO_PROXY: agentd,model-gateway,egress-proxy,approval-web,issuer-web,hosted-agents,oauth2-proxy,localhost,127.0.0.1${AGENTGATE_CORPORATE_NO_PROXY:+,}${AGENTGATE_CORPORATE_NO_PROXY:-}

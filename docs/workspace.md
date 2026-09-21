@@ -9,9 +9,10 @@ Part of the [AgentBox documentation](../README.md#documentation).
 `compose.yaml` is the core stack one developer runs: the broker, the isolated
 workspace, the egress proxy, and the model gateway. It needs only its own eight
 settings (GitHub App, key, client token, TLS files, gateway token, model key).
-`enterprise/compose.enterprise.yaml` layers on the audit forwarder and the OIDC approval UI
-with oauth2-proxy, and is where the SIEM and identity-provider settings are
-required; use it as `docker compose -f compose.yaml -f enterprise/compose.enterprise.yaml`.
+`compose.audit-forward.yaml` layers on the audit forwarder, where the SIEM settings are required.
+The commercial edition's `enterprise/compose.enterprise.yaml` layers on the OIDC approval UI with
+oauth2-proxy, the issuing service, and hosted-agent coverage, and is where the identity-provider
+settings are required.
 Without it, approvals come from the host CLI and rules that require
 `reviewerSources: ["oidc"]` cannot be satisfied, because agentd holds no
 approval-web admin secret.
@@ -280,6 +281,11 @@ cosign verify ghcr.io/OWNER/agentgate:vX.Y.Z \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 docker buildx imagetools inspect ghcr.io/OWNER/agentgate:vX.Y.Z --format '{{json .SBOM}}'
 ```
+
+A package GHCR creates on a first publish is private, whatever the repository's visibility, so an
+anonymous `docker pull` of a brand-new package name fails with `denied`. After the first release,
+set each package to public once (the repository owner's Packages tab, then the package's settings);
+later releases keep that setting.
 
 CI (`.github/workflows/ci.yml`) also runs a Trivy scan on every push and pull
 request, failing on fixable HIGH/CRITICAL vulnerabilities. Release builds each

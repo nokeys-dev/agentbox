@@ -48,6 +48,26 @@ test('the corporate proxy and CA overrides cover the services that call out and 
       assert.deepEqual(keys, ['environment']);
     }
   }
-  for (const text of [proxy]) assert.ok(!/^  workspace:/m.test(text), 'the workspace is never pointed at the corporate proxy');
+  const forwardProxy = read('compose.corporate-proxy.audit-forward.yaml');
+  assert.deepEqual(named(forwardProxy), ['audit-forwarder'], 'the forwarder calls the SIEM through the proxy too');
+  assert.match(forwardProxy, /NO_PROXY: agentd,model-gateway,egress-proxy,/);
+  for (const text of [proxy, forwardProxy]) assert.ok(!/^  workspace:/m.test(text), 'the workspace is never pointed at the corporate proxy');
   assert.match(core.split('\n  workspace:\n')[1].split('\n  egress-proxy:\n')[0], /NODE_USE_ENV_PROXY: "1"/, 'Node tools in the workspace read the egress proxy from the environment');
+});
+
+// Audit forwarding is part of the open-source edition: shipping the hash-chained log to a SIEM must
+// not need the commercial Compose file. The forwarder reads the broker's state read-only, because
+// it is the one core service on the internet-facing network.
+test('the audit forwarder is an open-source override that only reads the broker state', () => {
+  const forward = readFileSync(resolve('compose.audit-forward.yaml'), 'utf8');
+  assert.deepEqual(services(`${forward.split('\nvolumes:\n')[0]}\nnetworks:\n`), ['agentd', 'audit-forwarder']);
+  const forwarder = forward.split('\n  audit-forwarder:\n')[1].split(/\n[a-z]+:\n/)[0];
+  assert.match(forwarder, /^ {4}build: \.$/m, 'the open-source image, never a commercial one');
+  assert.match(forwarder, /- broker-state:\/var\/lib\/agentgate:ro/, 'the broker state is read-only to the forwarder');
+  assert.match(forwarder, /networks:\n {6}- upstream/);
+  for (const setting of ['read_only: true', 'cap_drop:', 'no-new-privileges:true', 'mem_limit:']) assert.ok(forwarder.includes(setting), setting);
+  assert.deepEqual(required(forward), ['AGENTGATE_AUDIT_SINK_TOKEN_PATH', 'AGENTGATE_AUDIT_SINK_URL']);
+  const agentd = forward.split('\n  agentd:\n')[1].split(/\n  [a-z0-9-]+:\n/)[0];
+  assert.match(agentd, /audit-forward-state:\/var\/lib\/agentgate-forward:ro/, 'agentd only reads the checkpoint');
+  assert.ok(!core.includes('AGENTGATE_AUDIT_SINK_URL'), 'the core stack needs none of it');
 });

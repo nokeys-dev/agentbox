@@ -105,7 +105,7 @@ promptly.
 
 ### Audit forwarding
 
-`npm run audit:forward` (or the `audit-forwarder` service in `enterprise/compose.enterprise.yaml`) ships
+`npm run audit:forward` (or the `audit-forwarder` service in `compose.audit-forward.yaml`) ships
 chained audit records off-host over HTTPS so a compromised or wiped broker
 host cannot erase the only copy of its own history. `forwardOnce` reads
 `audit.jsonl` and any rotated files, verifies the pending records extend the

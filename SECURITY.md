@@ -5,9 +5,10 @@ keys, or the audit trail. Reports are welcome and taken seriously.
 
 ## Reporting a vulnerability
 
-- Email security@nokeys.dev. Include the commit or release, the component (`agentd`, workspace,
-  issuer, gateway, proxy, approval UI, forwarder, control plane), steps to reproduce, and the
-  impact against the attacker models in `docs/security-review-scope.md`.
+- Use GitHub's [private vulnerability reporting](https://github.com/rvasqz86/agentbox/security/advisories/new)
+  on this repository, or email security@nokeys.dev. Either way, include the commit or release, the
+  component (`agentd`, workspace, issuer, gateway, proxy, approval UI, forwarder, control plane),
+  steps to reproduce, and the impact against the attacker models in `docs/security-review-scope.md`.
 - Do not open a public issue for anything that could let an agent exceed its delegated identity,
   reach a credential, bypass an approval, or alter the audit chain.
 - You will get an acknowledgement within two business days and a fix or a mitigation plan within
