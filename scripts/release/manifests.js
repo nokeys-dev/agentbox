@@ -11,7 +11,7 @@ if (!/^\d+\.\d+\.\d+/.test(version || '') || !/^[0-9a-f]{64}$/.test(tarballSha |
   process.exit(2);
 }
 mkdirSync(join(out, 'winget'), { recursive: true });
-const repo = 'https://github.com/rvasqz86/agentbox';
+const repo = 'https://github.com/nokeys-dev/agentbox';
 writeFileSync(join(out, 'agentbox.rb'), `require "language/node"
 
 class Agentbox < Formula
