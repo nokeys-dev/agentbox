@@ -5,7 +5,7 @@ keys, or the audit trail. Reports are welcome and taken seriously.
 
 ## Reporting a vulnerability
 
-- Use GitHub's [private vulnerability reporting](https://github.com/rvasqz86/agentbox/security/advisories/new)
+- Use GitHub's [private vulnerability reporting](https://github.com/nokeys-dev/agentbox/security/advisories/new)
   on this repository, or email security@nokeys.dev. Either way, include the commit or release, the
   component (`agentd`, workspace, issuer, gateway, proxy, approval UI, forwarder, control plane),
   steps to reproduce, and the impact against the attacker models in `docs/security-review-scope.md`.

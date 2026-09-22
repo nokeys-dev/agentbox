@@ -101,7 +101,7 @@ isolated workspace; see [docs/workspace.md](docs/workspace.md#using-an-ide-with-
 
 The same flow without a checkout, once a release is published: `npm install -g @nokeys/agentbox`, or the
 Homebrew formula, winget manifest, `.deb`, or single-file executable attached to each
-[release](https://github.com/rvasqz86/agentbox/releases) (the executables need no Node).
+[release](https://github.com/nokeys-dev/agentbox/releases) (the executables need no Node).
 
 ```bash
 mkdir my-agent && cd my-agent

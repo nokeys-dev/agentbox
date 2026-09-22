@@ -6,10 +6,10 @@
   "homepage": "https://nokeys.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rvasqz86/agentbox.git"
+    "url": "git+https://github.com/nokeys-dev/agentbox.git"
   },
   "bugs": {
-    "url": "https://github.com/rvasqz86/agentbox/issues"
+    "url": "https://github.com/nokeys-dev/agentbox/issues"
   },
   "keywords": [
     "ai-agents",
